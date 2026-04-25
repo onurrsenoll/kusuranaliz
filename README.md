@@ -21,7 +21,7 @@ TRAMER (Trafik Sigortaları Bilgi Merkezi) tarafından yayımlanan **48 standart
 
 ### AI mod (`ai.html`)
 - **Şifreli giriş** (tek kullanıcı, SHA-256 hash, 8 saat oturum)
-- **Çoklu sağlayıcı:** Google Gemini, OpenAI, Anthropic Claude
+- **Çoklu sağlayıcı:** OpenRouter (varsayılan, Claude 3.5 Sonnet), Anthropic Claude, Google Gemini, OpenAI
 - **Test Et** butonu — her API anahtarının çalışıp çalışmadığı anında doğrulanır
 - **Tutanak yükleme:** drag & drop, çoklu görsel, otomatik sıkıştırma
 - **TRAMER zorunlu:** AI 1-48 arası senaryo numarası seçer; kusur oranı veritabanından gelir
@@ -44,9 +44,10 @@ Veya GitHub Pages: <https://onurrsenoll.github.io/kusuranaliz/>
 1. `ai.html` aç → Parola belirle (en az 6 karakter)
 2. **Ayarlar** sekmesine geç
 3. Kullanmak istediğin sağlayıcıdan API anahtarı al ve gir:
+   - **OpenRouter** (önerilir, tek anahtarla Claude/GPT/Gemini): <https://openrouter.ai/keys>
+   - Anthropic (yalnızca Claude): <https://console.anthropic.com/settings/keys>
    - Gemini: <https://aistudio.google.com/app/apikey>
    - OpenAI: <https://platform.openai.com/api-keys>
-   - Anthropic: <https://console.anthropic.com/settings/keys>
 4. **Test Et** ile bağlantıyı doğrula → ✓ ÇALIŞIYOR rozeti görmelisin
 5. **Aktif Sağlayıcı**'yı seç → **Kaydet**
 6. **Yeni Analiz** sekmesinde tutanak görselini yükle → 🤖 Analiz Et
