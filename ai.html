@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRAMER AI Kaza Analiz · Kusur Analiz Robotu</title>
+  <meta name="description" content="TRAMER 48 senaryolu yapay zekâ destekli kaza tutanağı analizi." />
+  <link rel="stylesheet" href="css/ai.css" />
+</head>
+<body>
+
+  <!-- Animasyonlu arka plan -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <!-- ===================== LOGIN EKRANI ===================== -->
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card glass">
+      <div class="login-brand">
+        <div class="logo-mark">⚡</div>
+        <h1>TRAMER AI</h1>
+        <p>Yapay Zekâ Destekli Kaza Tutanağı Analizi</p>
+      </div>
+
+      <!-- İlk kurulum -->
+      <form id="setupForm" class="login-form" hidden>
+        <h3>İlk Kurulum</h3>
+        <p class="hint">Bu cihazda ilk kez açılıyor. Bir parola belirleyin.</p>
+        <label>Yeni Parola
+          <input type="password" id="setupPwd1" minlength="6" required />
+        </label>
+        <label>Parola (Tekrar)
+          <input type="password" id="setupPwd2" minlength="6" required />
+        </label>
+        <button type="submit" class="btn-primary btn-block">Parolayı Kaydet ve Giriş Yap</button>
+      </form>
+
+      <!-- Normal login -->
+      <form id="loginForm" class="login-form" hidden>
+        <h3>Giriş</h3>
+        <label>Parola
+          <input type="password" id="loginPwd" required autofocus />
+        </label>
+        <button type="submit" class="btn-primary btn-block">Giriş Yap</button>
+        <button type="button" id="forgotBtn" class="btn-text">Parolamı sıfırla</button>
+      </form>
+
+      <p id="loginMsg" class="login-msg" hidden></p>
+    </div>
+  </section>
+
+  <!-- ===================== ANA UYGULAMA ===================== -->
+  <div id="app" class="app" hidden>
+
+    <!-- Üst bar -->
+    <header class="topbar glass">
+      <div class="brand">
+        <div class="logo-mark sm">⚡</div>
+        <div>
+          <h1>TRAMER AI</h1>
+          <small>Kaza Tutanağı Analiz Modülü</small>
+        </div>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button class="tab active" data-tab="analyze">🔍 Yeni Analiz</button>
+        <button class="tab" data-tab="history">📚 Geçmiş</button>
+        <button class="tab" data-tab="settings">⚙️ Ayarlar</button>
+      </nav>
+      <div class="topbar-actions">
+        <button id="themeToggle" class="icon-btn" title="Tema değiştir">🌓</button>
+        <a href="index.html" class="icon-btn" title="Klasik TRAMER 48 (manuel)">📋</a>
+        <button id="logoutBtn" class="icon-btn" title="Çıkış">🚪</button>
+      </div>
+    </header>
+
+    <main class="main">
+
+      <!-- ============ YENİ ANALİZ ============ -->
+      <section id="tab-analyze" class="tab-panel active">
+        <div class="grid-2">
+          <!-- Yükleme paneli -->
+          <div class="card glass">
+            <h2>📷 Tutanak ve Fotoğraflar</h2>
+
+            <div id="dropzone" class="dropzone">
+              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple hidden />
+              <div class="dz-icon">📤</div>
+              <div class="dz-text">
+                <strong>Görsel sürükleyip bırakın</strong>
+                <span>veya tıklayıp seçin · JPG / PNG / WEBP</span>
+              </div>
+            </div>
+
+            <div id="filePreview" class="file-preview"></div>
+
+            <label class="field">
+              <span>Ek Notlar (isteğe bağlı)</span>
+              <textarea id="extraNotes" rows="3" placeholder="Hava koşulları, görgü tanıkları, ek bilgi..."></textarea>
+            </label>
+
+            <div class="actions">
+              <button id="analyzeBtn" class="btn-primary" disabled>🤖 Yapay Zekâ ile Analiz Et</button>
+              <button id="clearBtn" class="btn-ghost">Temizle</button>
+            </div>
+          </div>
+
+          <!-- Sonuç paneli -->
+          <div class="card glass">
+            <h2>📊 Analiz Sonucu</h2>
+
+            <div id="resultEmpty" class="empty-state">
+              <div class="empty-icon">🤖</div>
+              <p>Tutanak yükleyip <strong>Analiz Et</strong>'e basın.<br/>
+              Yapay zekâ TRAMER 48 senaryosundan birini seçecek, kusur oranı senaryo veritabanından alınacaktır.</p>
+            </div>
+
+            <div id="resultLoading" class="loading-state" hidden>
+              <div class="loading-pulse">
+                <div></div><div></div><div></div>
+              </div>
+              <p id="loadingText">Yapay zekâ analiz ediyor…</p>
+            </div>
+
+            <div id="resultBox" class="result-content" hidden>
+              <!-- Eşleşen senaryo -->
+              <div class="result-scenario">
+                <div class="scenario-tag" id="resScenarioTag">Senaryo #—</div>
+                <h3 id="resScenarioTitle">—</h3>
+                <p id="resScenarioCat" class="muted">—</p>
+              </div>
+
+              <!-- Kusur kartları -->
+              <div class="fault-grid">
+                <div class="fault-pill a">
+                  <div class="fp-label">A Aracı</div>
+                  <div class="fp-value" id="resFaultA">—</div>
+                </div>
+                <div class="fault-pill b">
+                  <div class="fp-label">B Aracı</div>
+                  <div class="fp-value" id="resFaultB">—</div>
+                </div>
+              </div>
+
+              <!-- AI gerekçesi -->
+              <details open class="acc">
+                <summary>🧠 AI Gerekçesi</summary>
+                <p id="resReason"></p>
+              </details>
+
+              <details class="acc">
+                <summary>👥 Taraf Beyanları</summary>
+                <div class="party-pair">
+                  <div><strong>A:</strong> <span id="resBeyanA">—</span></div>
+                  <div><strong>B:</strong> <span id="resBeyanB">—</span></div>
+                </div>
+              </details>
+
+              <details class="acc">
+                <summary>🚦 İhlal Edilen Kurallar</summary>
+                <ul id="resIhlaller"></ul>
+              </details>
+
+              <details class="acc">
+                <summary>📜 Kaynak Senaryo Açıklaması</summary>
+                <p id="resScenarioDesc"></p>
+                <p class="muted small" id="resLawRef"></p>
+              </details>
+
+              <div class="actions">
+                <button id="btnSaveAi" class="btn-primary">💾 Geçmişe Kaydet</button>
+                <button id="btnPdfAi" class="btn-ghost">📄 PDF</button>
+                <button id="btnXlsxAi" class="btn-ghost">📊 Excel</button>
+              </div>
+
+              <p class="disclaimer">
+                Sonuç TRAMER 48 senaryosu veritabanından alınmıştır; kusur yüzdesi <strong>tahmin değildir</strong>.
+                Yapay zekâ yalnızca olayı en uygun senaryoya eşler. Resmî tespit sigorta şirketinizin değerlendirmesidir.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ GEÇMİŞ ============ -->
+      <section id="tab-history" class="tab-panel">
+        <div class="card glass">
+          <div class="row-between">
+            <h2>📚 AI Analiz Geçmişi</h2>
+            <div class="actions">
+              <button id="btnExportAllAi" class="btn-ghost">📊 Tümünü Excel'e Aktar</button>
+              <button id="btnClearAi" class="btn-danger">🗑 Temizle</button>
+            </div>
+          </div>
+          <table id="historyTable" class="table">
+            <thead>
+              <tr><th>Tarih</th><th>Senaryo</th><th>A%</th><th>B%</th><th>Sağlayıcı</th><th></th></tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+          <p id="historyEmpty" class="empty-state small">Henüz kayıtlı analiz bulunmuyor.</p>
+        </div>
+      </section>
+
+      <!-- ============ AYARLAR ============ -->
+      <section id="tab-settings" class="tab-panel">
+        <div class="card glass">
+          <h2>⚙️ API Sağlayıcıları</h2>
+          <p class="muted">Anahtarlar yalnızca bu tarayıcıda saklanır. Kullanmak istediğiniz sağlayıcıyı seçip <strong>Test Et</strong> ile bağlantıyı doğrulayın.</p>
+
+          <div id="providersList" class="providers"></div>
+
+          <div class="row-between mt-lg">
+            <div>
+              <strong>Aktif Sağlayıcı:</strong>
+              <select id="activeProvider"></select>
+            </div>
+            <button id="saveSettingsBtn" class="btn-primary">Kaydet</button>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <h2>🔐 Güvenlik</h2>
+          <button id="changePwdBtn" class="btn-ghost">Parolayı Değiştir</button>
+          <button id="resetAllBtn" class="btn-danger">Tüm Verileri Sıfırla</button>
+          <p class="muted small">"Tüm verileri sıfırla" parola, ayarlar ve geçmişin tamamını siler.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="foot">
+      <small>TRAMER AI v1.0 · MIT · <a href="index.html">Klasik manuel sürüm</a></small>
+    </footer>
+  </div>
+
+  <!-- Toast -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- 3rd party -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- App -->
+  <script src="js/scenarios.js"></script>
+  <script src="js/exports.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/ai-providers.js"></script>
+  <script src="js/ai-app.js"></script>
+</body>
+</html>
