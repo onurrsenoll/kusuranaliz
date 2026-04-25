@@ -279,11 +279,28 @@ ${buildScenarioCatalog()}`;
   // Format: OpenAI uyumlu /chat/completions
   const OpenRouter = {
     id: 'openrouter',
-    label: 'OpenRouter (Claude 3.5 Sonnet)',
+    label: 'OpenRouter (çoklu model)',
     icon: 'R',
     placeholder: 'sk-or-v1-... (OpenRouter API anahtarı)',
     docsUrl: 'https://openrouter.ai/keys',
-    _model: 'anthropic/claude-3.5-sonnet',
+    defaultModel: 'openai/gpt-4o-mini',
+
+    // Kullanıcı seçebileceği modeller (vision destekli)
+    models: [
+      { id: 'openai/gpt-4o-mini',           label: 'GPT-4o-mini · ucuz, kararlı, vision' },
+      { id: 'openai/gpt-4o',                label: 'GPT-4o · kalite, vision' },
+      { id: 'google/gemini-flash-1.5',      label: 'Gemini Flash 1.5 · en ucuz' },
+      { id: 'google/gemini-pro-1.5',        label: 'Gemini Pro 1.5 · denge' },
+      { id: 'anthropic/claude-3.5-haiku',   label: 'Claude 3.5 Haiku · hızlı, ucuz' },
+      { id: 'anthropic/claude-3.5-sonnet',  label: 'Claude 3.5 Sonnet · kalite (privacy ayarı gerekebilir)' },
+    ],
+
+    _activeModel() {
+      try {
+        const cfg = (window.Settings && Settings.getProvider('openrouter')) || {};
+        return cfg.model || this.defaultModel;
+      } catch (e) { return this.defaultModel; }
+    },
 
     async testKey(apiKey) {
       if (!apiKey) return { ok: false, message: 'Anahtar boş.' };
@@ -295,12 +312,13 @@ ${buildScenarioCatalog()}`;
           const j = await r.json();
           const usage = j.data?.usage;
           const limit = j.data?.limit;
+          const model = this._activeModel();
           let msg = 'Bağlantı OK';
           if (typeof usage === 'number') {
             msg += ` · Kullanım: $${usage.toFixed(4)}`;
             if (typeof limit === 'number') msg += ` / $${limit.toFixed(2)}`;
           }
-          msg += ` · Model: ${this._model}`;
+          msg += ` · Model: ${model}`;
           return { ok: true, message: msg };
         }
         const e = await r.json().catch(() => ({}));
@@ -316,7 +334,7 @@ ${buildScenarioCatalog()}`;
         ...images.map(d => ({ type: 'image_url', image_url: { url: d } })),
       ];
       const body = {
-        model: this._model,
+        model: this._activeModel(),
         messages: [
           { role: 'system', content: systemPrompt() },
           { role: 'user', content },
