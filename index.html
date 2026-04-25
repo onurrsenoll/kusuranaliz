@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kaza Kusur Analiz Robotu v3 — TRAMER 48 Senaryo</title>
+  <meta name="description" content="TRAMER 48 standart kaza senaryosuna göre kusur oranı analizi, PDF/Excel raporu ve geçmiş kayıt desteği." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">🚗</span>
+      <div>
+        <h1>Kaza Kusur Analiz Robotu</h1>
+        <small>v3 — TRAMER 48 Senaryo</small>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="analyze" role="tab">Analiz</button>
+      <button class="tab" data-tab="history" role="tab">Geçmiş</button>
+      <button class="tab" data-tab="about" role="tab">Hakkında</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ ANALİZ SEKMESİ ============ -->
+    <section id="tab-analyze" class="tab-panel active">
+      <aside class="sidebar">
+        <h2>Senaryolar</h2>
+        <input type="search" id="searchBox" placeholder="🔍 Senaryo ara (örn. arkadan, kavşak, sollama)" />
+        <select id="categoryFilter">
+          <option value="">Tüm kategoriler</option>
+        </select>
+        <ul id="scenarioList" class="scenario-list" aria-label="Senaryo listesi"></ul>
+      </aside>
+
+      <section class="workspace">
+        <div id="scenarioDetail" class="scenario-detail empty">
+          <p class="placeholder">Sol panelden bir senaryo seçin.</p>
+        </div>
+
+        <form id="analyzeForm" class="analyze-form" hidden>
+          <h3>Taraf Bilgileri</h3>
+          <div class="grid-2">
+            <fieldset>
+              <legend>A Aracı</legend>
+              <label>Plaka <input type="text" id="plateA" placeholder="34 ABC 123" required /></label>
+              <label>Sürücü <input type="text" id="driverA" placeholder="Ad Soyad" required /></label>
+              <label>Sigorta Şirketi <input type="text" id="insurerA" placeholder="Sigorta A.Ş." /></label>
+            </fieldset>
+            <fieldset>
+              <legend>B Aracı</legend>
+              <label>Plaka <input type="text" id="plateB" placeholder="06 XYZ 456" required /></label>
+              <label>Sürücü <input type="text" id="driverB" placeholder="Ad Soyad" required /></label>
+              <label>Sigorta Şirketi <input type="text" id="insurerB" placeholder="Sigorta A.Ş." /></label>
+            </fieldset>
+          </div>
+          <div class="grid-2">
+            <label>Kaza Tarihi <input type="datetime-local" id="accidentDate" required /></label>
+            <label>Kaza Yeri <input type="text" id="accidentLocation" placeholder="İstanbul / Kadıköy" required /></label>
+          </div>
+          <label>Ek Notlar
+            <textarea id="notes" rows="3" placeholder="Hava koşulları, görgü tanıkları, vb."></textarea>
+          </label>
+
+          <div class="actions">
+            <button type="submit" class="primary">Analiz Et</button>
+            <button type="reset" class="ghost">Temizle</button>
+          </div>
+        </form>
+
+        <div id="resultBox" class="result-box" hidden>
+          <h3>Analiz Sonucu</h3>
+          <div class="result-grid">
+            <div class="fault-card a">
+              <div class="label">A Aracı (<span id="resPlateA"></span>)</div>
+              <div class="percent" id="resFaultA">0%</div>
+            </div>
+            <div class="fault-card b">
+              <div class="label">B Aracı (<span id="resPlateB"></span>)</div>
+              <div class="percent" id="resFaultB">0%</div>
+            </div>
+          </div>
+          <p class="legal-ref" id="resLawRef"></p>
+          <div class="actions">
+            <button id="btnExportPdf" class="primary">📄 PDF İndir</button>
+            <button id="btnExportXlsx" class="primary">📊 Excel İndir</button>
+            <button id="btnSaveHistory" class="ghost">💾 Geçmişe Kaydet</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============ GEÇMİŞ SEKMESİ ============ -->
+    <section id="tab-history" class="tab-panel">
+      <div class="history-toolbar">
+        <h2>Geçmiş Analizler</h2>
+        <div class="actions">
+          <button id="btnExportAllXlsx" class="primary">📊 Tümünü Excel'e Aktar</button>
+          <button id="btnClearHistory" class="danger">🗑 Geçmişi Temizle</button>
+        </div>
+      </div>
+      <table class="history-table" aria-describedby="historyEmpty">
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Senaryo</th>
+            <th>A Plaka</th>
+            <th>B Plaka</th>
+            <th>A Kusur</th>
+            <th>B Kusur</th>
+            <th>İşlem</th>
+          </tr>
+        </thead>
+        <tbody id="historyTbody"></tbody>
+      </table>
+      <p id="historyEmpty" class="placeholder">Henüz kayıtlı analiz bulunmuyor.</p>
+    </section>
+
+    <!-- ============ HAKKINDA SEKMESİ ============ -->
+    <section id="tab-about" class="tab-panel">
+      <article class="about">
+        <h2>Hakkında</h2>
+        <p>
+          <strong>Kaza Kusur Analiz Robotu v3</strong>, TRAMER tarafından kullanılan 48 standart kaza
+          senaryosunu temel alan tarayıcı tabanlı bir kusur değerlendirme aracıdır.
+          Tüm hesaplamalar tarayıcınızda yapılır; verileriniz dışarı gönderilmez.
+        </p>
+        <h3>Önemli Uyarı</h3>
+        <p class="warning">
+          Bu uygulama yalnızca <em>eğitim ve ön değerlendirme</em> amaçlıdır.
+          Resmî kusur tespitleri için sigorta şirketinizin / SBM'nin değerlendirmesi esastır.
+        </p>
+        <h3>Sürüm Notları</h3>
+        <ul>
+          <li><strong>v3.0</strong> — 48 senaryolu TRAMER veritabanı, PDF/Excel dışa aktarım, geçmiş kayıt</li>
+          <li>v2.0 — 32 senaryo + temel kusur hesabı</li>
+          <li>v1.0 — 12 senaryo + manuel hesap</li>
+        </ul>
+        <h3>Kütüphaneler</h3>
+        <ul>
+          <li><a href="https://github.com/parallax/jsPDF" target="_blank" rel="noopener">jsPDF</a> — PDF üretimi</li>
+          <li><a href="https://sheetjs.com" target="_blank" rel="noopener">SheetJS</a> — Excel dışa aktarımı</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <small>© 2026 — Kaza Kusur Analiz Robotu • MIT Lisansı</small>
+  </footer>
+
+  <!-- 3rd party libraries (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Application scripts -->
+  <script src="js/scenarios.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/exports.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
