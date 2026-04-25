@@ -129,8 +129,11 @@
       Settings.setActiveProvider(id);
       AIProviders.list().forEach(p => {
         const inp = $(`#key-${p.id}`);
+        const modelSel = $(`#model-${p.id}`);
         if (inp) {
-          Settings.setProvider(p.id, { apiKey: inp.value.trim() });
+          const patch = { apiKey: inp.value.trim() };
+          if (modelSel) patch.model = modelSel.value;
+          Settings.setProvider(p.id, patch);
         }
       });
       toast('Ayarlar kaydedildi.', 'success');
@@ -178,6 +181,18 @@
       const statusClass = last ? (last.ok ? 'ok' : 'fail') : 'unknown';
       const statusText = last ? (last.ok ? '✓ ÇALIŞIYOR' : '✗ HATA') : 'Test edilmedi';
 
+      // Model seçici (yalnızca model listesi olan sağlayıcılar için, örn. OpenRouter)
+      const currentModel = cfg.model || p.defaultModel;
+      const modelHtml = (Array.isArray(p.models) && p.models.length) ? `
+        <label class="field">
+          <span>Model</span>
+          <select id="model-${p.id}">
+            ${p.models.map(m =>
+              `<option value="${escapeHtml(m.id)}" ${m.id === currentModel ? 'selected' : ''}>${escapeHtml(m.label)}</option>`
+            ).join('')}
+          </select>
+        </label>` : '';
+
       card.innerHTML = `
         <div class="provider-head">
           <div class="provider-title">
@@ -193,6 +208,7 @@
           <span>API Anahtarı</span>
           <input type="password" id="key-${p.id}" placeholder="${escapeHtml(p.placeholder)}" value="${escapeHtml(cfg.apiKey || '')}" autocomplete="off"/>
         </label>
+        ${modelHtml}
         <div class="provider-actions">
           <button class="btn-ghost" data-test="${p.id}">🔌 Test Et</button>
           <button class="btn-ghost" data-show="${p.id}">👁 Göster</button>
@@ -212,13 +228,23 @@
         inp.type = inp.type === 'password' ? 'text' : 'password';
       });
     });
+    // Model dropdown anlık kayıt (Test Et için)
+    list.querySelectorAll('select[id^="model-"]').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const id = sel.id.replace('model-', '');
+        Settings.setProvider(id, { model: sel.value });
+      });
+    });
   }
 
   async function testProvider(id) {
     const provider = AIProviders.get(id);
     if (!provider) return;
     const key = $(`#key-${id}`).value.trim();
-    Settings.setProvider(id, { apiKey: key });
+    const modelSel = $(`#model-${id}`);
+    const patch = { apiKey: key };
+    if (modelSel) patch.model = modelSel.value;
+    Settings.setProvider(id, patch);
 
     const status = $(`#status-${id}`);
     const msg = $(`#msg-${id}`);
