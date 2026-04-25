@@ -274,8 +274,84 @@ ${buildScenarioCatalog()}`;
     },
   };
 
+  // ===================== OPENROUTER =====================
+  // Tek anahtar ile Claude, GPT, Gemini vb. modellere erişim sağlar.
+  // Format: OpenAI uyumlu /chat/completions
+  const OpenRouter = {
+    id: 'openrouter',
+    label: 'OpenRouter (Claude 3.5 Sonnet)',
+    icon: 'R',
+    placeholder: 'sk-or-v1-... (OpenRouter API anahtarı)',
+    docsUrl: 'https://openrouter.ai/keys',
+    _model: 'anthropic/claude-3.5-sonnet',
+
+    async testKey(apiKey) {
+      if (!apiKey) return { ok: false, message: 'Anahtar boş.' };
+      try {
+        const r = await fetch('https://openrouter.ai/api/v1/auth/key', {
+          headers: { 'Authorization': `Bearer ${apiKey}` },
+        });
+        if (r.ok) {
+          const j = await r.json();
+          const usage = j.data?.usage;
+          const limit = j.data?.limit;
+          let msg = 'Bağlantı OK';
+          if (typeof usage === 'number') {
+            msg += ` · Kullanım: $${usage.toFixed(4)}`;
+            if (typeof limit === 'number') msg += ` / $${limit.toFixed(2)}`;
+          }
+          msg += ` · Model: ${this._model}`;
+          return { ok: true, message: msg };
+        }
+        const e = await r.json().catch(() => ({}));
+        return { ok: false, message: e.error?.message || `HTTP ${r.status}` };
+      } catch (e) {
+        return { ok: false, message: 'Ağ hatası: ' + e.message };
+      }
+    },
+
+    async analyze(apiKey, images, notes) {
+      const content = [
+        { type: 'text', text: userPrompt(notes) },
+        ...images.map(d => ({ type: 'image_url', image_url: { url: d } })),
+      ];
+      const body = {
+        model: this._model,
+        messages: [
+          { role: 'system', content: systemPrompt() },
+          { role: 'user', content },
+        ],
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
+        max_tokens: 1500,
+      };
+      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': location.origin,
+          'X-Title': 'TRAMER AI',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+        throw new Error(e.error?.message || `OpenRouter ${r.status}`);
+      }
+      const j = await r.json();
+      const txt = j.choices?.[0]?.message?.content || '';
+      return normalizeResult(tryParseJson(txt));
+    },
+  };
+
   // ===================== Public =====================
-  const all = { gemini: Gemini, openai: OpenAI, anthropic: Anthropic };
+  const all = {
+    openrouter: OpenRouter,
+    anthropic: Anthropic,
+    gemini: Gemini,
+    openai: OpenAI,
+  };
 
   return {
     list: () => Object.values(all),

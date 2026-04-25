@@ -22,7 +22,7 @@ const Settings = (() => {
   function getAll() {
     const s = _load();
     return {
-      activeProvider: s.activeProvider || 'gemini',
+      activeProvider: s.activeProvider || 'openrouter',
       providers: s.providers || {},
     };
   }
@@ -47,7 +47,7 @@ const Settings = (() => {
 
   function getActiveProvider() {
     const s = _load();
-    return s.activeProvider || 'gemini';
+    return s.activeProvider || 'openrouter';
   }
 
   function getActiveApiKey() {
